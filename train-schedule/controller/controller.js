@@ -62,11 +62,11 @@ const GetToken = async(req,res) => {
 
 const getTrains = async(req,res) => {
     try {
-         let data ;
+         let trains ;
          const cacheKey = 'myData';
          const cachedData = await req.app.locals.cache[cacheKey];
          if (cachedData) {
-             data = cachedData;
+             trains = cachedData;
          }
          else{
             
@@ -76,25 +76,15 @@ const getTrains = async(req,res) => {
          await axios.get("http://localhost:3000/trains",{
              headers: headers 
          }).then(res => {
-             data = res.data;
+             trains = res.data;
          })
-             req.app.locals.cache[cacheKey] = data;
+             req.app.locals.cache[cacheKey] = trains;
          }
-        // const fdata = data.filter((i)=>{
-        //     return isTimeWithinNext30Minutes(i.departureTime.Hours,i.departureTime.Minutes + i.delayedBy,i.departureTime.Seconds)
-        // });
 
-        // data.sort((a, b) => a.departureTime.sleeper + b.departureTime.AC);
+         
+        const data = sortPrices(trains);
 
-        for (let i = 0; i < data.length; i++) {
-            for (let j = 0; j < data.length - 1; j++) {
-              if (data[j].departureTime.sleeper > data[j + 1].departureTime.sleeper) {
-                let temp = data[j];
-                data[j] = data[j + 1];
-                data[j + 1] = temp;
-              }
-            }
-          }
+         
 
         console.log(data);
 
@@ -103,9 +93,25 @@ const getTrains = async(req,res) => {
     } catch (error) {
         res.status(400).json({message:"Error"});
     }
-}
+};
 
-
+function sortPrices (trains) {
+    const n = trains.length;
+         for (let i = 0; i < n - 1; i++) {
+           for (let j = 0; j < n - i - 1; j++) {
+             if (trains[j].prices.sleeper > trains[j + 1].prices.sleeper || 
+                trains[j].prices.AC > trains[j + 1].prices.AC
+                ) {
+               const temp = trains[j];
+               trains[j] = trains[j + 1];
+               trains[j + 1] = temp;
+             }
+           }
+         }
+         return trains;
+        }
+        
+        
 function isTimeWithinNext30Minutes(hour, minute, second) {
     const now = new Date();
     const givenTime = new Date();
