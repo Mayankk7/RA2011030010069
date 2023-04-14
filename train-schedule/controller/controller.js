@@ -80,11 +80,26 @@ const getTrains = async(req,res) => {
          })
              req.app.locals.cache[cacheKey] = data;
          }
-        const fdata = data.filter((i)=>{
-            return isTimeWithinNext30Minutes(i.departureTime.Hours,i.departureTime.Minutes + i.delayedBy,i.departureTime.Seconds)
-        });
+        // const fdata = data.filter((i)=>{
+        //     return isTimeWithinNext30Minutes(i.departureTime.Hours,i.departureTime.Minutes + i.delayedBy,i.departureTime.Seconds)
+        // });
 
-        res.json({data:fdata});
+        // data.sort((a, b) => a.departureTime.sleeper + b.departureTime.AC);
+
+        for (let i = 0; i < data.length; i++) {
+            for (let j = 0; j < data.length - 1; j++) {
+              if (data[j].departureTime.sleeper > data[j + 1].departureTime.sleeper) {
+                let temp = data[j];
+                data[j] = data[j + 1];
+                data[j + 1] = temp;
+              }
+            }
+          }
+
+        console.log(data);
+
+
+        res.json({data:data});
     } catch (error) {
         res.status(400).json({message:"Error"});
     }
